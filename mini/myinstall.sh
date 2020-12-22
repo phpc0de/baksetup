@@ -6,7 +6,7 @@ clear
 printf "
 #######################################################################
 #       OneinStack for CentOS/RedHat 7                                #
-#       For more information please visit https://oneinstack.com      #
+#       For more information please visit                             #
 #######################################################################
 "
 # Check if user is root
@@ -22,15 +22,15 @@ pushd ${oneinstack_dir} > /dev/null
 . ./include/download.sh
 . ./include/get_char.sh
 
-dbrootpwd=`< /dev/urandom tr -dc A-Za-z0-9 | head -c8`
-dbpostgrespwd=`< /dev/urandom tr -dc A-Za-z0-9 | head -c8`
-dbmongopwd=`< /dev/urandom tr -dc A-Za-z0-9 | head -c8`
-xcachepwd=`< /dev/urandom tr -dc A-Za-z0-9 | head -c8`
+dbrootpwd=`< /dev/urandom tr -dc A-Za-z0-9 | head -c15`
+dbpostgrespwd=`< /dev/urandom tr -dc A-Za-z0-9 | head -c15`
+dbmongopwd=`< /dev/urandom tr -dc A-Za-z0-9 | head -c15`
+xcachepwd=`< /dev/urandom tr -dc A-Za-z0-9 | head -c15`
 dbinstallmethod=1
 
 version() {
-  echo "version: 2.3"
-  echo "updated date: 2020-07-05"
+  echo "version: 0.1"
+  echo "updated date: 2020-12"
 }
 
 Show_Help() {
@@ -39,9 +39,6 @@ Show_Help() {
   --help, -h                  Show this help message, More: https://oneinstack.com/auto
   --version, -v               Show version info
   --nginx_option [1-3]        Install Nginx server version
-  --apache_option [1-2]       Install Apache server version
-  --apache_mode_option [1-2]  Apache2.4 mode, 1(default): php-fpm, 2: mod_php
-  --apache_mpm_option [1-3]   Apache2.4 MPM, 1(default): event, 2: prefork, 3: worker
   --php_option [1-9]          Install PHP version
   --mphp_ver [53~74]          Install another PHP version (PATH: ${php_install_dir}\${mphp_ver})
   --mphp_addons               Only install another PHP addons
@@ -126,8 +123,6 @@ while :; do
       db_option=$2; shift 2
       if [[ "${db_option}" =~ ^[1-9]$|^1[0-3]$ ]]; then
         [ -d "${db_install_dir}/support-files" ] && { echo "${CWARNING}MySQL already installed! ${CEND}"; unset db_option; }
-      elif [ "${db_option}" == '14' ]; then
-        [ -e "${pgsql_install_dir}/bin/psql" ] && { echo "${CWARNING}PostgreSQL already installed! ${CEND}"; unset db_option; }
       elif [ "${db_option}" == '15' ]; then
         [ -e "${mongo_install_dir}/bin/mongo" ] && { echo "${CWARNING}MongoDB already installed! ${CEND}"; unset db_option; }
       else
@@ -163,9 +158,6 @@ while :; do
     --hhvm)
       hhvm_flag=y; shift 1
       [ -e "/usr/bin/hhvm" ] && { echo "${CWARNING}HHVM already installed! ${CEND}"; unset hhvm_flag; }
-      ;;
-    --python)
-      python_flag=y; shift 1
       ;;
     --reboot)
       reboot_flag=y; shift 1
@@ -301,7 +293,7 @@ done
           echo -e "\t${CMSG}8${CEND}. Install php-7.3"
           echo -e "\t${CMSG}9${CEND}. Install php-7.4"
           read -e -p "Please input a number:(Default 7 press Enter) " php_option
-          php_option=${php_option:-7}
+          php_option=${php_option:-8}
           if [[ ! ${php_option} =~ ^[1-9]$ ]]; then
             echo "${CWARNING}input error! Please only input number 1~9${CEND}"
           else
@@ -345,13 +337,7 @@ done
         break
       fi
     done
-    # set xcache passwd
-    if [ "${phpcache_option}" == '2' ]; then
-      while :; do
-        read -e -p "Please input xcache admin password: " xcachepwd
-        (( ${#xcachepwd} >= 5 )) && { xcachepwd_md5=$(echo -n "${xcachepwd}" | md5sum | awk '{print $1}') ; break ; } || echo "${CFAILURE}xcache admin password least 5 characters! ${CEND}"
-      done
-    fi
+
     # PHP extension
     while :; do
       echo
@@ -373,8 +359,8 @@ done
       echo -e "\t${CMSG}14${CEND}. Install mongodb"
       echo -e "\t${CMSG}15${CEND}. Install swoole"
       echo -e "\t${CMSG}16${CEND}. Install xdebug(PHP>=5.5)"
-      read -e -p "Please input numbers:(Default '4 11 12' press Enter) " phpext_option
-      phpext_option=${phpext_option:-'4 11 12'}
+      read -e -p "Please input numbers:(Default '4 11 12 14' press Enter) " phpext_option
+      phpext_option=${phpext_option:-'4 11 12 14'}
       [ "${phpext_option}" == '0' ] && break
       array_phpext=(${phpext_option})
       array_all=(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16)
@@ -476,7 +462,7 @@ done
   done
 fi
 
-if [[ ${nginx_option} =~ ^[1-3]$ ]] || [[ ${apache_option} =~ ^[1-2]$ ]] || [[ ${tomcat_option} =~ ^[1-4]$ ]]; then
+if [[ ${nginx_option} =~ ^[1-3]$ ]]; then
   [ ! -d ${wwwroot_dir}/default ] && mkdir -p ${wwwroot_dir}/default
   [ ! -d ${wwwlogs_dir} ] && mkdir -p ${wwwlogs_dir}
 fi
@@ -492,13 +478,16 @@ if [ ! -e ~/.oneinstack ]; then
 fi
 
 # get the IP information
-IPADDR=$(./include/get_ipaddr.py)
-PUBLIC_IPADDR=$(./include/get_public_ipaddr.py)
-IPADDR_COUNTRY=$(./include/get_ipaddr_state.py ${PUBLIC_IPADDR})
+IPADDR="127.0.0.1"
+PUBLIC_IPADDR="1.0.0.1"
+IPADDR_COUNTRY="US"
 
 # Check download source packages
 . ./include/check_download.sh
 checkDownload 2>&1 | tee -a ${oneinstack_dir}/install.log
+
+
+//read
 
 # del openssl for jcloud
 [ -e "/usr/local/bin/openssl" ] && rm -rf /usr/local/bin/openssl
@@ -514,14 +503,6 @@ if [ ! -e ~/.oneinstack ]; then
     "CentOS")
       installDepsCentOS 2>&1 | tee ${oneinstack_dir}/install.log
       . include/init_CentOS.sh 2>&1 | tee -a ${oneinstack_dir}/install.log
-      ;;
-    "Debian")
-      installDepsDebian 2>&1 | tee ${oneinstack_dir}/install.log
-      . include/init_Debian.sh 2>&1 | tee -a ${oneinstack_dir}/install.log
-      ;;
-    "Ubuntu")
-      installDepsUbuntu 2>&1 | tee ${oneinstack_dir}/install.log
-      . include/init_Ubuntu.sh 2>&1 | tee -a ${oneinstack_dir}/install.log
       ;;
   esac
   # Install dependencies from source package
@@ -735,11 +716,6 @@ PHP_addons() {
     Install_pecl_xdebug 2>&1 | tee -a ${oneinstack_dir}/install.log
   fi
 
-  # pecl_pgsql
-  if [ -e "${pgsql_install_dir}/bin/psql" ]; then
-    . include/pecl_pgsql.sh
-    Install_pecl_pgsql 2>&1 | tee -a ${oneinstack_dir}/install.log
-  fi
 }
 
 [ "${mphp_addons_flag}" != 'y' ] && PHP_addons
@@ -813,10 +789,6 @@ echo "Total OneinStack Install Time: ${CQUESTION}${installTime}${CEND} minutes"
 [[ "${db_option}" =~ ^[1-9]$|^1[0-3]$ ]] && echo "$(printf "%-32s" "Database data dir:")${CMSG}${db_data_dir}${CEND}"
 [[ "${db_option}" =~ ^[1-9]$|^1[0-3]$ ]] && echo "$(printf "%-32s" "Database user:")${CMSG}root${CEND}"
 [[ "${db_option}" =~ ^[1-9]$|^1[0-3]$ ]] && echo "$(printf "%-32s" "Database password:")${CMSG}${dbrootpwd}${CEND}"
-[ "${db_option}" == '14' ] && echo -e "\n$(printf "%-32s" "PostgreSQL install dir:")${CMSG}${pgsql_install_dir}${CEND}"
-[ "${db_option}" == '14' ] && echo "$(printf "%-32s" "PostgreSQL data dir:")${CMSG}${pgsql_data_dir}${CEND}"
-[ "${db_option}" == '14' ] && echo "$(printf "%-32s" "PostgreSQL user:")${CMSG}postgres${CEND}"
-[ "${db_option}" == '14' ] && echo "$(printf "%-32s" "postgres password:")${CMSG}${dbpostgrespwd}${CEND}"
 [ "${db_option}" == '15' ] && echo -e "\n$(printf "%-32s" "MongoDB install dir:")${CMSG}${mongo_install_dir}${CEND}"
 [ "${db_option}" == '15' ] && echo "$(printf "%-32s" "MongoDB data dir:")${CMSG}${mongo_data_dir}${CEND}"
 [ "${db_option}" == '15' ] && echo "$(printf "%-32s" "MongoDB user:")${CMSG}root${CEND}"
