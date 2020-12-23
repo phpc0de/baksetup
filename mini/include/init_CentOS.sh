@@ -106,5 +106,6 @@ if [ -e "$(which ntpdate)" ]; then
 fi
 
 service rsyslog restart
+service sshd restart
 
 . /etc/profile
