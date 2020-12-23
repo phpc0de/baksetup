@@ -178,7 +178,7 @@ EOF
     sed -i 's@^query_cache_size.*@query_cache_size = 64M@' /etc/my.cnf
     sed -i 's@^myisam_sort_buffer_size.*@myisam_sort_buffer_size = 64M@' /etc/my.cnf
     sed -i 's@^key_buffer_size.*@key_buffer_size = 256M@' /etc/my.cnf
-    sed -i 's@^innodb_buffer_pool_size.*@innodb_buffer_pool_size = 1024@' /etc/my.cnf
+    sed -i 's@^innodb_buffer_pool_size.*@innodb_buffer_pool_size = 512M@' /etc/my.cnf
     sed -i 's@^tmp_table_size.*@tmp_table_size = 128M@' /etc/my.cnf
     sed -i 's@^table_open_cache.*@table_open_cache = 1024@' /etc/my.cnf    
     sed -i 's@^innodb_log_buffer_size.*@innodb_log_buffer_size = 8M@' /etc/my.cnf
