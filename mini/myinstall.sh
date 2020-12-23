@@ -715,7 +715,6 @@ if [ "${mphp_flag}" == 'y' ]; then
 fi
 
 
-
 # Pure-FTPd
 if [ "${pureftpd_flag}" == 'y' ]; then
   . include/pureftpd.sh
@@ -739,6 +738,7 @@ if [ "${memcached_flag}" == 'y' ]; then
   . include/memcached.sh
   Install_memcached_server 2>&1 | tee -a ${oneinstack_dir}/install.log
 fi
+//read
 
 # index example
 if [ -d "${wwwroot_dir}/default" ]; then
