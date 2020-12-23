@@ -226,27 +226,19 @@ checkDownload() {
       fi
       ;;
   esac
-//read
+
   # ioncube
   if [ "${pecl_ioncube}" == '1' ]; then
     echo "Download ioncube..."
     src_url=https://downloads.ioncube.com/loader_downloads/ioncube_loaders_lin_${SYS_BIT_d}.tar.gz && Download_src
   fi
 
-  # SourceGuardian
-  if [ "${pecl_sourceguardian}" == '1' ]; then
-    echo "Download SourceGuardian..."
-    if [ "${TARGET_ARCH}" == "armv8" ]; then
-      src_url=https://www.sourceguardian.com/loaders/download/loaders.linux-aarch64.tar.gz && Download_src
-    else
-      src_url=${mirrorLink}/loaders.linux-${SYS_BIT_c}.tar.gz && Download_src
-    fi
-  fi
+
 
   # imageMagick
   if [ "${pecl_imagick}" == '1' ]; then
     echo "Download ImageMagick..."
-    src_url=${mirrorLink}/ImageMagick-${imagemagick_ver}.tar.gz && Download_src
+    src_url=https://github.com/ImageMagick/ImageMagick/archive/${imagemagick_ver}.tar.gz && Download_src
     echo "Download imagick..."
     src_url=https://pecl.php.net/get/imagick-${imagick_ver}.tgz && Download_src
   fi
@@ -270,7 +262,7 @@ checkDownload() {
     src_url=http://download.redis.io/releases/redis-${redis_ver}.tar.gz && Download_src
     if [ "${PM}" == 'yum' ]; then
       echo "Download start-stop-daemon.c for CentOS..."
-      src_url=${mirrorLink}/start-stop-daemon.c && Download_src
+      src_url=https://raw.githubusercontent.com/daleobrien/start-stop-daemon/master/start-stop-daemon.c && Download_src
     fi
   fi
 
@@ -288,7 +280,7 @@ checkDownload() {
   # memcached-server
   if [ "${memcached_flag}" == 'y' ]; then
     echo "Download memcached-server..."
-    [ "${IPADDR_COUNTRY}"x == "CN"x ] && DOWN_ADDR=${mirrorLink} || DOWN_ADDR=http://www.memcached.org/files
+    DOWN_ADDR=https://www.memcached.org/files
     src_url=${DOWN_ADDR}/memcached-${memcached_ver}.tar.gz && Download_src
   fi
 
@@ -328,9 +320,9 @@ checkDownload() {
   # pureftpd
   if [ "${pureftpd_flag}" == 'y' ]; then
     echo "Download pureftpd..."
-    src_url=https://download.pureftpd.org/pub/pure-ftpd/releases/pure-ftpd-${pureftpd_ver}.tar.gz && Download_src
+    src_url=https://github.com/jedisct1/pure-ftpd/releases/download/${pureftpd_ver}/pure-ftpd-${pureftpd_ver}.tar.gz && Download_src
   fi
-
+//read
   # phpMyAdmin
   if [ "${phpmyadmin_flag}" == 'y' ]; then
     echo "Download phpMyAdmin..."
