@@ -323,7 +323,7 @@ done
             while :; do
               echo 'Please select a opcode cache of the PHP:'
               echo -e "\t${CMSG}1${CEND}. Install Zend OPcache"
-              echo -e "\t${CMSG}3${CEND}. Install APCU"
+              #echo -e "\t${CMSG}3${CEND}. Install APCU"
               read -e -p "Please input a number:(Default 1 press Enter) " phpcache_option
               phpcache_option=${phpcache_option:-1}
               if [[ ! ${phpcache_option} =~ ^[1,3]$ ]]; then
@@ -487,7 +487,7 @@ IPADDR_COUNTRY="US"
 checkDownload 2>&1 | tee -a ${oneinstack_dir}/install.log
 
 
-//read
+
 
 # del openssl for jcloud
 [ -e "/usr/local/bin/openssl" ] && rm -rf /usr/local/bin/openssl
@@ -526,11 +526,6 @@ fi
 
 # Database
 case "${db_option}" in
-  1)
-    [ "${OS}" == 'CentOS' ] && [ ${CentOS_ver} -le 6 >/dev/null 2>&1 ] && dbinstallmethod=1 && checkDownload
-    . include/mysql-8.0.sh
-    Install_MySQL80 2>&1 | tee -a ${oneinstack_dir}/install.log
-    ;;
   2)
     . include/mysql-5.7.sh
     Install_MySQL57 2>&1 | tee -a ${oneinstack_dir}/install.log
@@ -550,14 +545,6 @@ case "${nginx_option}" in
   1)
     . include/nginx.sh
     Install_Nginx 2>&1 | tee -a ${oneinstack_dir}/install.log
-    ;;
-  2)
-    . include/tengine.sh
-    Install_Tengine 2>&1 | tee -a ${oneinstack_dir}/install.log
-    ;;
-  3)
-    . include/openresty.sh
-    Install_OpenResty 2>&1 | tee -a ${oneinstack_dir}/install.log
     ;;
 esac
 
@@ -623,7 +610,7 @@ PHP_addons() {
     . include/sourceguardian.sh
     Install_SourceGuardian 2>&1 | tee -a ${oneinstack_dir}/install.log
   fi
-
+//read
   # imagick
   if [ "${pecl_imagick}" == '1' ]; then
     . include/ImageMagick.sh
