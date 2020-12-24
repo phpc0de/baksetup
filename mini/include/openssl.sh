@@ -7,8 +7,7 @@ Install_openSSL() {
     echo "${CWARNING}openSSL already installed! ${CEND}"
   else
     pushd ${oneinstack_dir}/src > /dev/null  
-    tar xzf OpenSSL_${openssl_ver}.tar.gz
-    mv openssl-OpenSSL_${openssl_ver} openssl-${openssl_ver}
+    tar xzf openssl-${openssl_ver}.tar.gz
     pushd openssl-${openssl_ver} > /dev/null
     make clean
     ./config -Wl,-rpath=${openssl_install_dir}/lib -fPIC --prefix=${openssl_install_dir} --openssldir=${openssl_install_dir}
