@@ -35,7 +35,7 @@ checkDownload() {
   case "${nginx_option}" in
     1)
       echo "Download nginx..."
-      src_url=https://github.com/nginx/nginx/archive/release-${nginx_ver}.tar.gz  && Download_src
+      src_url=https://nginx.org/download/nginx-${nginx_ver}.tar.gz  && Download_src
       ;;
   esac
 
@@ -168,17 +168,23 @@ checkDownload() {
       ;;
     7)
       src_url=https://secure.php.net/distributions/php-${php72_ver}.tar.gz && Download_src
-      src_url=https://github.com/P-H-C/phc-winner-argon2/archive/${argon2_ver}.tar.gz && Download_src
+      #src_url=https://github.com/P-H-C/phc-winner-argon2/archive/${argon2_ver}.tar.gz && Download_src
+      tar xzf argon2-${argon2_ver}.tar.gz
+      mv phc-winner-argon2-20190702 argon2-${argon2_ver}
       src_url=https://github.com/jedisct1/libsodium/releases/download/${libsodium_ver}-RELEASE/libsodium-${libsodium_ver}.tar.gz && Download_src
       ;;
     8)
       src_url=https://secure.php.net/distributions/php-${php73_ver}.tar.gz && Download_src
-      src_url=https://github.com/P-H-C/phc-winner-argon2/archive/${argon2_ver}.tar.gz && Download_src
+      #src_url=https://github.com/P-H-C/phc-winner-argon2/archive/${argon2_ver}.tar.gz && Download_src
+      tar xzf argon2-${argon2_ver}.tar.gz
+      mv phc-winner-argon2-20190702 argon2-${argon2_ver}
       src_url=https://github.com/jedisct1/libsodium/releases/download/${libsodium_ver}-RELEASE/libsodium-${libsodium_ver}.tar.gz && Download_src
       ;;
     9)
       src_url=https://secure.php.net/distributions/php-${php74_ver}.tar.gz && Download_src
-      src_url=https://github.com/P-H-C/phc-winner-argon2/archive/${argon2_ver}.tar.gz && Download_src
+      #src_url=https://github.com/P-H-C/phc-winner-argon2/archive/${argon2_ver}.tar.gz && Download_src
+      tar xzf argon2-${argon2_ver}.tar.gz
+      mv phc-winner-argon2-20190702 argon2-${argon2_ver}
       src_url=https://github.com/jedisct1/libsodium/releases/download/${libsodium_ver}-RELEASE/libsodium-${libsodium_ver}.tar.gz && Download_src
       src_url=https://github.com/nih-at/libzip/releases/download/v${libzip_ver}/libzip-${libzip_ver}.tar.gz && Download_src
       ;;
