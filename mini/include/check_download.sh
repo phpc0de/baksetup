@@ -322,7 +322,6 @@ checkDownload() {
     echo "Download pureftpd..."
     src_url=https://github.com/jedisct1/pure-ftpd/releases/download/${pureftpd_ver}/pure-ftpd-${pureftpd_ver}.tar.gz && Download_src
   fi
-//read
   # phpMyAdmin
   if [ "${phpmyadmin_flag}" == 'y' ]; then
     echo "Download phpMyAdmin..."
