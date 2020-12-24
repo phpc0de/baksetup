@@ -6,9 +6,10 @@ Install_openSSL() {
   if [ -e "${openssl_install_dir}/lib/libssl.a" ]; then
     echo "${CWARNING}openSSL already installed! ${CEND}"
   else
-    pushd ${oneinstack_dir}/src > /dev/null
-    tar xzf OpenSSL_${openssl11_ver}.tar.gz
-    pushd OpenSSL_${openssl_ver} > /dev/null
+    pushd ${oneinstack_dir}/src > /dev/null  
+    tar xzf OpenSSL_${openssl_ver}.tar.gz
+    mv openssl-OpenSSL_${openssl_ver} openssl-${openssl_ver}
+    pushd openssl-${openssl_ver} > /dev/null
     make clean
     ./config -Wl,-rpath=${openssl_install_dir}/lib -fPIC --prefix=${openssl_install_dir} --openssldir=${openssl_install_dir}
     make depend
@@ -17,7 +18,7 @@ Install_openSSL() {
     if [ -f "${openssl_install_dir}/lib/libcrypto.a" ]; then
       echo "${CSUCCESS}openssl installed successfully! ${CEND}"
       /bin/cp cacert.pem ${openssl_install_dir}/cert.pem
-      rm -rf OpenSSL_${openssl_ver}
+      rm -rf openssl-${openssl_ver}
     else
       echo "${CFAILURE}openSSL install failed, Please contact the author! ${CEND}" && lsb_release -a
       kill -9 $$
