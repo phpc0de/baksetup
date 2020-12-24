@@ -51,7 +51,7 @@ installDepsBySrc() {
   fi
 
   if ! command -v icu-config > /dev/null 2>&1 || icu-config --version | grep '^3.' || [ "${Ubuntu_ver}" == "20" ]; then
-    tar xzf icu4c-${icu4c_ver}-src.tgz
+    tar xzf icu4c-${icu4c_ver}_${icu4c_ver2}-src.tgz
     pushd icu/source > /dev/null
     ./configure --prefix=/usr/local
     make -j ${THREAD} && make install
