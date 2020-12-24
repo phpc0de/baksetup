@@ -1,19 +1,13 @@
 #!/bin/bash
 # Author:  yeho <lj2007331 AT gmail.com>
-# BLOG:  https://linuxeye.com
-#
-# Notes: OneinStack for CentOS/RedHat 6+ Debian 8+ and Ubuntu 14+
-#
-# Project home page:
-#       https://oneinstack.com
-#       https://github.com/oneinstack/oneinstack
+
 
 export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 clear
 printf "
 #######################################################################
-#       OneinStack for CentOS/RedHat 6+ Debian 8+ and Ubuntu 14+      #
-#       For more information please visit https://oneinstack.com      #
+#                             Minisetup                               #
+#                                                                     #
 #######################################################################
 "
 # Check if user is root
@@ -200,131 +194,7 @@ Choose_ENV() {
   fi
 }
 
-Create_SSL() {
-  if [ "${Domian_Mode}" == '2' ]; then
-    printf "
-You are about to be asked to enter information that will be incorporated
-into your certificate request.
-What you are about to enter is what is called a Distinguished Name or a DN.
-There are quite a few fields but you can leave some blank
-For some fields there will be a default value,
-If you enter '.', the field will be left blank.
-"
-    echo
-    read -e -p "Country Name (2 letter code) [CN]: " SELFSIGNEDSSL_C
-    SELFSIGNEDSSL_C=${SELFSIGNEDSSL_C:-CN}
-    # shellcheck disable=SC2104
-    [ ${#SELFSIGNEDSSL_C} != 2 ] && { echo "${CWARNING}input error, You must input 2 letter code country name${CEND}"; continue; }
-    echo
-    read -e -p "State or Province Name (full name) [Shanghai]: " SELFSIGNEDSSL_ST
-    SELFSIGNEDSSL_ST=${SELFSIGNEDSSL_ST:-Shanghai}
-    echo
-    read -e -p "Locality Name (eg, city) [Shanghai]: " SELFSIGNEDSSL_L
-    SELFSIGNEDSSL_L=${SELFSIGNEDSSL_L:-Shanghai}
-    echo
-    read -e -p "Organization Name (eg, company) [Example Inc.]: " SELFSIGNEDSSL_O
-    SELFSIGNEDSSL_O=${SELFSIGNEDSSL_O:-"Example Inc."}
-    echo
-    read -e -p "Organizational Unit Name (eg, section) [IT Dept.]: " SELFSIGNEDSSL_OU
-    SELFSIGNEDSSL_OU=${SELFSIGNEDSSL_OU:-"IT Dept."}
 
-    openssl req -utf8 -new -newkey rsa:2048 -sha256 -nodes -out ${PATH_SSL}/${domain}.csr -keyout ${PATH_SSL}/${domain}.key -subj "/C=${SELFSIGNEDSSL_C}/ST=${SELFSIGNEDSSL_ST}/L=${SELFSIGNEDSSL_L}/O=${SELFSIGNEDSSL_O}/OU=${SELFSIGNEDSSL_OU}/CN=${domain}" > /dev/null 2>&1
-    openssl x509 -req -days 36500 -sha256 -in ${PATH_SSL}/${domain}.csr -signkey ${PATH_SSL}/${domain}.key -out ${PATH_SSL}/${domain}.crt > /dev/null 2>&1
-  elif [ "${Domian_Mode}" == '3' -o "${dnsapi_flag}" == 'y' ]; then
-    if [ "${moredomain}" == "*.${domain}" -o "${dnsapi_flag}" == 'y' ]; then
-      while :; do echo
-        echo 'Please select DNS provider:'
-        echo "${CMSG}dp${CEND},${CMSG}cx${CEND},${CMSG}ali${CEND},${CMSG}cf${CEND},${CMSG}aws${CEND},${CMSG}linode${CEND},${CMSG}he${CEND},${CMSG}namesilo${CEND},${CMSG}dgon${CEND},${CMSG}freedns${CEND},${CMSG}gd${CEND},${CMSG}namecom${CEND} and so on."
-        echo "${CMSG}More: https://oneinstack.com/faq/letsencrypt${CEND}"
-        read -e -p "Please enter your DNS provider: " DNS_PRO
-        if [ -e ~/.acme.sh/dnsapi/dns_${DNS_PRO}.sh ]; then
-          break
-        else
-          echo "${CWARNING}You DNS api mode is not supported${CEND}"
-        fi
-      done
-      while :; do echo
-        echo "Syntax: export Key1=Value1 ; export Key2=Value1"
-        read -e -p "Please enter your dnsapi parameters: " DNS_PAR
-        echo
-        eval ${DNS_PAR}
-        if [ $? == 0 ]; then
-          break
-        else
-          echo "${CWARNING}Syntax error! PS: export Ali_Key=LTq ; export Ali_Secret=0q5E${CEND}"
-        fi
-      done
-      [ "${moredomainame_flag}" == 'y' ] && moredomainame_D="$(for D in ${moredomainame}; do echo -d ${D}; done)"
-      ~/.acme.sh/acme.sh --force --listen-v4 --issue --dns dns_${DNS_PRO} -d ${domain} ${moredomainame_D}
-    else
-      if [ "${nginx_ssl_flag}" == 'y' ]; then
-        [ ! -d ${web_install_dir}/conf/vhost ] && mkdir ${web_install_dir}/conf/vhost
-        echo "server {  server_name ${domain}${moredomainame};  root ${vhostdir};  access_log off; }" > ${web_install_dir}/conf/vhost/${domain}.conf
-        ${web_install_dir}/sbin/nginx -s reload
-      fi
-      if [ "${apache_ssl_flag}" == 'y' ]; then
-        [ ! -d ${apache_install_dir}/conf/vhost ] && mkdir ${apache_install_dir}/conf/vhost
-        cat > ${apache_install_dir}/conf/vhost/${domain}.conf << EOF
-<VirtualHost *:80>
-  ServerAdmin admin@example.com
-  DocumentRoot "${vhostdir}"
-  ServerName ${domain}
-  ${Apache_Domain_alias}
-<Directory "${vhostdir}">
-  SetOutputFilter DEFLATE
-  Options FollowSymLinks ExecCGI
-  ${Apache_grant}
-  AllowOverride All
-  Order allow,deny
-  Allow from all
-  DirectoryIndex index.html index.php
-</Directory>
-</VirtualHost>
-EOF
-        ${apache_install_dir}/bin/apachectl -k graceful
-      fi
-      auth_file="`< /dev/urandom tr -dc A-Za-z0-9 | head -c8`".html
-      auth_str='oneinstack'; echo ${auth_str} > ${vhostdir}/${auth_file}
-      for D in ${domain} ${moredomainame}
-      do
-        curl_str=`curl --connect-timeout 30 -4 -s $D/${auth_file} 2>&1`
-        [ "${curl_str}" != "${auth_str}" ] && { echo; echo "${CFAILURE}Let's Encrypt Verify error! DNS problem: NXDOMAIN looking up A for ${D}${CEND}"; }
-      done
-      rm -f ${vhostdir}/${auth_file}
-      [ "${moredomainame_flag}" == 'y' ] && moredomainame_D="$(for D in ${moredomainame}; do echo -d ${D}; done)"
-      ~/.acme.sh/acme.sh --force --listen-v4 --issue -d ${domain} ${moredomainame_D} -w ${vhostdir}
-    fi
-    if [ -s ~/.acme.sh/${domain}/fullchain.cer ]; then
-      [ -e "${PATH_SSL}/${domain}.crt" ] && rm -f ${PATH_SSL}/${domain}.{crt,key}
-      [ -e /bin/systemctl -a -e /lib/systemd/system/nginx.service ] && Nginx_cmd='/bin/systemctl restart nginx' || Nginx_cmd='/etc/init.d/nginx force-reload'
-      Apache_cmd="${apache_install_dir}/bin/apachectl -k graceful"
-      if [ -e "${web_install_dir}/sbin/nginx" -a -e "${apache_install_dir}/bin/httpd" ]; then
-        Command="${Nginx_cmd};${Apache_cmd}"
-      elif [ -e "${web_install_dir}/sbin/nginx" -a ! -e "${apache_install_dir}/bin/httpd" ]; then
-        Command="${Nginx_cmd}"
-      elif [ ! -e "${web_install_dir}/sbin/nginx" -a -e "${apache_install_dir}/bin/httpd" ]; then
-        Command="${Apache_cmd}"
-      fi
-      ~/.acme.sh/acme.sh --force --install-cert -d ${domain} --fullchain-file ${PATH_SSL}/${domain}.crt --key-file ${PATH_SSL}/${domain}.key --reloadcmd "${Command}" > /dev/null
-    else
-      echo "${CFAILURE}Error: Create Let's Encrypt SSL Certificate failed! ${CEND}"
-      [ -e "${web_install_dir}/conf/vhost/${domain}.conf" ] && rm -f ${web_install_dir}/conf/vhost/${domain}.conf
-      [ -e "${apache_install_dir}/conf/vhost/${domain}.conf" ] && rm -f ${apache_install_dir}/conf/vhost/${domain}.conf
-      exit 1
-    fi
-  fi
-}
-
-Print_SSL() {
-  if [ "${Domian_Mode}" == '2' ]; then
-    echo "$(printf "%-30s" "Self-signed SSL Certificate:")${CMSG}${PATH_SSL}/${domain}.crt${CEND}"
-    echo "$(printf "%-30s" "SSL Private Key:")${CMSG}${PATH_SSL}/${domain}.key${CEND}"
-    echo "$(printf "%-30s" "SSL CSR File:")${CMSG}${PATH_SSL}/${domain}.csr${CEND}"
-  elif [ "${Domian_Mode}" == '3' -o "${dnsapi_flag}" == 'y' ]; then
-    echo "$(printf "%-30s" "Let's Encrypt SSL Certificate:")${CMSG}${PATH_SSL}/${domain}.crt${CEND}"
-    echo "$(printf "%-30s" "SSL Private Key:")${CMSG}${PATH_SSL}/${domain}.key${CEND}"
-  fi
-}
 
 Input_Add_proxy() {
   while :; do echo
@@ -407,29 +277,6 @@ What Are You Doing?
       ;;
   esac
 
-  if [ "${Domian_Mode}" == '3' -o "${dnsapi_flag}" == 'y' ] && [ ! -e ~/.acme.sh/acme.sh ]; then
-    pushd ${oneinstack_dir}/src > /dev/null
-    [ ! -e acme.sh-master.tar.gz ] && wget -qc http://mirrors.linuxeye.com/oneinstack/src/acme.sh-master.tar.gz
-    tar xzf acme.sh-master.tar.gz
-    pushd acme.sh-master > /dev/null
-    ./acme.sh --install > /dev/null 2>&1
-    popd > /dev/null
-    popd > /dev/null
-  fi
-  [ -e ~/.acme.sh/account.conf ] && sed -i '/^CERT_HOME=/d' ~/.acme.sh/account.conf
-  if [[ "${Domian_Mode}" =~ ^[2-3]$ ]] || [ "${dnsapi_flag}" == 'y' ]; then
-    if [ -e "${web_install_dir}/sbin/nginx" ]; then
-      nginx_ssl_flag=y
-      PATH_SSL=${web_install_dir}/conf/ssl
-      [ ! -d "${PATH_SSL}" ] && mkdir ${PATH_SSL}
-    elif [ ! -e "${web_install_dir}/sbin/nginx" -a -e "${apache_install_dir}/bin/httpd" ]; then
-      apache_ssl_flag=y
-      PATH_SSL=${apache_install_dir}/conf/ssl
-      [ ! -d "${PATH_SSL}" ] && mkdir ${PATH_SSL}
-    fi
-  elif [ "${Domian_Mode}" == 'q' ]; then
-    exit 1
-  fi
 
   while :; do echo
     read -e -p "Please input domain(example: www.example.com): " domain
@@ -678,8 +525,8 @@ EOF
 
   printf "
 #######################################################################
-#       OneinStack for CentOS/RedHat 6+ Debian 8+ and Ubuntu 14+      #
-#       For more information please visit https://oneinstack.com      #
+#                                                                     #
+#                                                                     #
 #######################################################################
 "
   echo "$(printf "%-30s" "Your domain:")${CMSG}${domain}${CEND}"
@@ -689,31 +536,7 @@ EOF
   Print_SSL
 }
 
-Create_tomcat_conf() {
-  cat > ${tomcat_install_dir}/conf/vhost/${domain}.xml << EOF
-<Host name="${domain}" appBase="webapps" unpackWARs="true" autoDeploy="true"> ${Tomcat_Domain_alias}
-  <Context path="" docBase="${vhostdir}" reloadable="false" crossContext="true"/>
-  <Valve className="org.apache.catalina.valves.AccessLogValve" directory="logs"
-    prefix="${domain}_access_log" suffix=".txt" pattern="%h %l %u %t &quot;%r&quot; %s %b" />
-</Host>
-EOF
-  [ -z "$(grep -o "vhost-${domain} SYSTEM" ${tomcat_install_dir}/conf/server.xml)" ] && sed -i "/vhost-localhost SYSTEM/a<\!ENTITY vhost-${domain} SYSTEM \"file://${tomcat_install_dir}/conf/vhost/${domain}.xml\">" ${tomcat_install_dir}/conf/server.xml
-  [ -z "$(grep -o "vhost-${domain};" ${tomcat_install_dir}/conf/server.xml)" ] && sed -i "s@vhost-localhost;@&\n      \&vhost-${domain};@" ${tomcat_install_dir}/conf/server.xml
 
-  echo
-  service tomcat restart
-
-  printf "
-#######################################################################
-#       OneinStack for CentOS/RedHat 6+ Debian 8+ and Ubuntu 14+      #
-#       For more information please visit https://oneinstack.com      #
-#######################################################################
-"
-  echo "$(printf "%-30s" "Your domain:")${CMSG}${domain}${CEND}"
-  echo "$(printf "%-30s" "Tomcat Virtualhost conf:")${CMSG}${tomcat_install_dir}/conf/vhost/${domain}.xml${CEND}"
-  echo "$(printf "%-30s" "Directory of:")${CMSG}${vhostdir}${CEND}"
-  echo "$(printf "%-30s" "index url:")${CMSG}http://${domain}:8080/${CEND}"
-}
 
 Create_nginx_phpfpm_hhvm_conf() {
   [ ! -d ${web_install_dir}/conf/vhost ] && mkdir ${web_install_dir}/conf/vhost
@@ -756,7 +579,7 @@ EOF
       sed -i "s@^  root.*;@&\n  }@" ${web_install_dir}/conf/vhost/${domain}.conf
       sed -i "s@^  root.*;@&\n    }@" ${web_install_dir}/conf/vhost/${domain}.conf
       sed -i "s@^  root.*;@&\n      return 403;@" ${web_install_dir}/conf/vhost/${domain}.conf
-      sed -i "s@^  root.*;@&\n      rewrite ^/ http://www.linuxeye.com/403.html;@" ${web_install_dir}/conf/vhost/${domain}.conf
+      #sed -i "s@^  root.*;@&\n      rewrite ^/ ;@" ${web_install_dir}/conf/vhost/${domain}.conf
       sed -i "s@^  root.*;@&\n    if (\$invalid_referer) {@" ${web_install_dir}/conf/vhost/${domain}.conf
       sed -i "s@^  root.*;@&\n    valid_referers none blocked ${domain_allow_all};@" ${web_install_dir}/conf/vhost/${domain}.conf
       sed -i "s@^  root.*;@&\n  location ~ .*\.(wma|wmv|asf|mp3|mmf|zip|rar|jpg|gif|png|swf|flv|mp4)\$ {@" ${web_install_dir}/conf/vhost/${domain}.conf
@@ -794,9 +617,7 @@ EOF
   fi
 
   printf "
-#######################################################################
-#       OneinStack for CentOS/RedHat 6+ Debian 8+ and Ubuntu 14+      #
-#       For more information please visit https://oneinstack.com      #
+
 #######################################################################
 "
   echo "$(printf "%-30s" "Your domain:")${CMSG}${domain}${CEND}"
@@ -863,7 +684,7 @@ EOF
       sed -i "s@^  root.*;@&\n  }@" ${web_install_dir}/conf/vhost/${domain}.conf
       sed -i "s@^  root.*;@&\n    }@" ${web_install_dir}/conf/vhost/${domain}.conf
       sed -i "s@^  root.*;@&\n      return 403;@" ${web_install_dir}/conf/vhost/${domain}.conf
-      sed -i "s@^  root.*;@&\n      rewrite ^/ http://www.linuxeye.com/403.html;@" ${web_install_dir}/conf/vhost/${domain}.conf
+      #sed -i "s@^  root.*;@&\n      rewrite ^/ http://www.linuxeye.com/403.html;@" ${web_install_dir}/conf/vhost/${domain}.conf
       sed -i "s@^  root.*;@&\n    if (\$invalid_referer) {@" ${web_install_dir}/conf/vhost/${domain}.conf
       sed -i "s@^  root.*;@&\n    valid_referers none blocked ${domain_allow_all};@" ${web_install_dir}/conf/vhost/${domain}.conf
       sed -i "s@^  root.*;@&\n  location ~ .*\.(wma|wmv|asf|mp3|mmf|zip|rar|jpg|gif|png|swf|flv|mp4)\$ {@" ${web_install_dir}/conf/vhost/${domain}.conf
@@ -884,9 +705,6 @@ EOF
 
   printf "
 #######################################################################
-#       OneinStack for CentOS/RedHat 6+ Debian 8+ and Ubuntu 14+      #
-#       For more information please visit https://oneinstack.com      #
-#######################################################################
 "
   echo "$(printf "%-30s" "Your domain:")${CMSG}${domain}${CEND}"
   echo "$(printf "%-30s" "Virtualhost conf:")${CMSG}${web_install_dir}/conf/vhost/${domain}.conf${CEND}"
@@ -895,196 +713,8 @@ EOF
   Print_SSL
 }
 
-Apache_log() {
-  while :; do echo
-    read -e -p "Allow Apache access_log? [y/n]: " access_flag
-    if [[ ! "${access_flag}" =~ ^[y,n]$ ]]; then
-      echo "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
-    else
-      break
-    fi
-  done
 
-  if [ "${access_flag}" == 'n' ]; then
-    Apache_log='CustomLog "/dev/null" common'
-  else
-    Apache_log="CustomLog \"${wwwlogs_dir}/${domain}_apache.log\" common"
-    echo "You access log file=${wwwlogs_dir}/${domain}_apache.log"
-  fi
-}
 
-Create_apache_conf() {
-  if [ "${Apache_main_ver}" == '24' ]; then
-    if [ -e "${php_install_dir}/sbin/php-fpm" ] && [ -n "`grep -E ^LoadModule.*mod_proxy_fcgi.so ${apache_install_dir}/conf/httpd.conf`" ]; then
-      Apache_fcgi=$(echo -e "<Files ~ (\\.user.ini|\\.htaccess|\\.git|\\.svn|\\.project|LICENSE|README.md)\$>\n    Order allow,deny\n    Deny from all\n  </Files>\n  <FilesMatch \\.php\$>\n    SetHandler \"proxy:unix:/dev/shm/php${mphp_ver}-cgi.sock|fcgi://localhost\"\n  </FilesMatch>")
-    fi
-  fi
-  [ ! -d ${apache_install_dir}/conf/vhost ] && mkdir ${apache_install_dir}/conf/vhost
-  cat > ${apache_install_dir}/conf/vhost/${domain}.conf << EOF
-<VirtualHost *:80>
-  ServerAdmin admin@example.com
-  DocumentRoot "${vhostdir}"
-  ServerName ${domain}
-  ${Apache_Domain_alias}
-  ErrorLog "${wwwlogs_dir}/${domain}_error_apache.log"
-  ${Apache_log}
-  ${Apache_fcgi}
-<Directory "${vhostdir}">
-  SetOutputFilter DEFLATE
-  Options FollowSymLinks ExecCGI
-  ${Apache_grant}
-  AllowOverride All
-  Order allow,deny
-  Allow from all
-  DirectoryIndex index.html index.php
-</Directory>
-</VirtualHost>
-EOF
-  [ "$apache_ssl_flag" == 'y' ] && cat >> ${apache_install_dir}/conf/vhost/${domain}.conf << EOF
-<VirtualHost *:443>
-  ServerAdmin admin@example.com
-  DocumentRoot "${vhostdir}"
-  ServerName ${domain}
-  ${Apache_Domain_alias}
-  ${Apache_SSL}
-  ErrorLog "${wwwlogs_dir}/${domain}_error_apache.log"
-  ${Apache_log}
-  ${Apache_fcgi}
-<Directory "${vhostdir}">
-  SetOutputFilter DEFLATE
-  Options FollowSymLinks ExecCGI
-  ${Apache_grant}
-  AllowOverride All
-  Order allow,deny
-  Allow from all
-  DirectoryIndex index.html index.php
-</Directory>
-</VirtualHost>
-EOF
-
-  echo
-  ${apache_install_dir}/bin/apachectl -t
-  if [ $? == 0 ]; then
-    echo "Restart Apache......"
-    ${apache_install_dir}/bin/apachectl -k graceful
-  else
-    rm -f ${apache_install_dir}/conf/vhost/${domain}.conf
-    echo "Create virtualhost ... [${CFAILURE}FAILED${CEND}]"
-    exit 1
-  fi
-
-  printf "
-#######################################################################
-#       OneinStack for CentOS/RedHat 6+ Debian 8+ and Ubuntu 14+      #
-#       For more information please visit https://oneinstack.com      #
-#######################################################################
-"
-  echo "$(printf "%-30s" "Your domain:")${CMSG}${domain}${CEND}"
-  echo "$(printf "%-30s" "Virtualhost conf:")${CMSG}${apache_install_dir}/conf/vhost/${domain}.conf${CEND}"
-  echo "$(printf "%-30s" "Directory of:")${CMSG}${vhostdir}${CEND}"
-  Print_SSL
-}
-
-Create_nginx_apache_modphp_conf() {
-  # Nginx/Tengine/OpenResty
-  [ ! -d ${web_install_dir}/conf/vhost ] && mkdir ${web_install_dir}/conf/vhost
-  cat > ${web_install_dir}/conf/vhost/${domain}.conf << EOF
-server {
-  ${Nginx_conf}
-  server_name ${domain}${moredomainame};
-  ${Nginx_log}
-  index index.html index.htm index.php;
-  root ${vhostdir};
-  ${Nginx_redirect}
-  ${anti_hotlinking}
-  location / {
-    try_files \$uri @apache;
-  }
-  location @apache {
-    proxy_pass http://127.0.0.1:88;
-    include proxy.conf;
-  }
-  location ~ .*\.(php|php5|cgi|pl)?$ {
-    proxy_pass http://127.0.0.1:88;
-    include proxy.conf;
-  }
-  location ~ .*\.(gif|jpg|jpeg|png|bmp|swf|flv|mp4|ico)$ {
-    expires 30d;
-    access_log off;
-  }
-  location ~ .*\.(js|css)?$ {
-    expires 7d;
-    access_log off;
-  }
-  location ~ /(\.user\.ini|\.ht|\.git|\.svn|\.project|LICENSE|README\.md) {
-    deny all;
-  }
-}
-EOF
-
-  [ "${https_flag}" == 'y' ] && sed -i "s@^  root.*;@&\n  if (\$ssl_protocol = \"\") { return 301 https://\$host\$request_uri; }@" ${web_install_dir}/conf/vhost/${domain}.conf
-
-  echo
-  ${web_install_dir}/sbin/nginx -t
-  if [ $? == 0 ]; then
-    echo "Reload Nginx......"
-    ${web_install_dir}/sbin/nginx -s reload
-  else
-    rm -f ${web_install_dir}/conf/vhost/${domain}.conf
-    echo "Create virtualhost ... [${CFAILURE}FAILED${CEND}]"
-  fi
-
-  # Apache
-  if [ "${Apache_main_ver}" == '24' ]; then
-    if [ -e "${php_install_dir}/sbin/php-fpm" ] && [ -n "`grep -E ^LoadModule.*mod_proxy_fcgi.so ${apache_install_dir}/conf/httpd.conf`" ]; then
-      Apache_fcgi=$(echo -e "<Files ~ (\\.user.ini|\\.htaccess|\\.git|\\.svn|\\.project|LICENSE|README.md)\$>\n    Order allow,deny\n    Deny from all\n  </Files>\n  <FilesMatch \\.php\$>\n    SetHandler \"proxy:unix:/dev/shm/php${mphp_ver}-cgi.sock|fcgi://localhost\"\n  </FilesMatch>")
-    fi
-  fi
-  [ ! -d ${apache_install_dir}/conf/vhost ] && mkdir ${apache_install_dir}/conf/vhost
-  cat > ${apache_install_dir}/conf/vhost/${domain}.conf << EOF
-<VirtualHost *:88>
-  ServerAdmin admin@example.com
-  DocumentRoot "${vhostdir}"
-  ServerName ${domain}
-  ${Apache_Domain_alias}
-  ${Apache_SSL}
-  ErrorLog "${wwwlogs_dir}/${domain}_error_apache.log"
-  ${Apache_log}
-  ${Apache_fcgi}
-<Directory "${vhostdir}">
-  SetOutputFilter DEFLATE
-  Options FollowSymLinks ExecCGI
-  ${Apache_grant}
-  AllowOverride All
-  Order allow,deny
-  Allow from all
-  DirectoryIndex index.html index.php
-</Directory>
-</VirtualHost>
-EOF
-
-  echo
-  ${apache_install_dir}/bin/apachectl -t
-  if [ $? == 0 ]; then
-    echo "Restart Apache......"
-    ${apache_install_dir}/bin/apachectl -k graceful
-  else
-    rm -f ${apache_install_dir}/conf/vhost/${domain}.conf
-    exit 1
-  fi
-
-  printf "
-#######################################################################
-#       OneinStack for CentOS/RedHat 6+ Debian 8+ and Ubuntu 14+      #
-#       For more information please visit https://oneinstack.com      #
-#######################################################################
-"
-  echo "$(printf "%-30s" "Your domain:")${CMSG}${domain}${CEND}"
-  echo "$(printf "%-30s" "Nginx Virtualhost conf:")${CMSG}${web_install_dir}/conf/vhost/${domain}.conf${CEND}"
-  echo "$(printf "%-30s" "Apache Virtualhost conf:")${CMSG}${apache_install_dir}/conf/vhost/${domain}.conf${CEND}"
-  echo "$(printf "%-30s" "Directory of:")${CMSG}${vhostdir}${CEND}"
-  Print_SSL
-}
 
 Add_Vhost() {
   if [ -e "${web_install_dir}/sbin/nginx" -a ! -e "${apache_install_dir}/bin/httpd" ]; then
@@ -1183,112 +813,7 @@ Del_NGX_Vhost() {
   fi
 }
 
-Del_Apache_Vhost() {
-  if [ -e "${apache_install_dir}/bin/httpd" ]; then
-    if [ -e "${web_install_dir}/sbin/nginx" ]; then
-      rm -f ${apache_install_dir}/conf/vhost/${domain}.conf
-      ${apache_install_dir}/bin/apachectl -k graceful
-    else
-      Domain_List=$(ls ${apache_install_dir}/conf/vhost | grep -v '0.conf' | sed "s@.conf@@g")
-      if [ -n "${Domain_List}" ]; then
-        echo
-        echo "Virtualhost list:"
-        echo ${CMSG}${Domain_List}${CEND}
-        while :; do echo
-          read -e -p "Please input a domain you want to delete: " domain
-          if [ -z "$(echo ${domain} | grep '.*\..*')" ]; then
-            echo "${CWARNING}Your ${domain} is invalid! ${CEND}"
-          else
-            if [ -e "${apache_install_dir}/conf/vhost/${domain}.conf" ]; then
-              Directory=$(grep '^<Directory ' ${apache_install_dir}/conf/vhost/${domain}.conf | head -1 | awk -F'"' '{print $2}')
-              rm -f ${apache_install_dir}/conf/vhost/${domain}.conf
-              [ -e "${apache_install_dir}/conf/ssl/${domain}.crt" ] && rm -f ${apache_install_dir}/conf/ssl/${domain}.{crt,key}
-              ${apache_install_dir}/bin/apachectl -k graceful
-              while :; do echo
-                read -e -p "Do you want to delete Virtul Host directory? [y/n]: " Del_Vhost_wwwroot_flag
-                if [[ ! ${Del_Vhost_wwwroot_flag} =~ ^[y,n]$ ]]; then
-                  echo "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
-                else
-                  break
-                fi
-              done
 
-              if [ "${Del_Vhost_wwwroot_flag}" == 'y' ]; then
-		if [ "${quiet_flag}" != 'y' ]; then
-                  echo "Press Ctrl+c to cancel or Press any key to continue..."
-                  char=$(get_char)
-		fi
-                rm -rf ${Directory}
-              fi
-              [ -d ~/.acme.sh/${domain} ] && ~/.acme.sh/acme.sh --force --remove -d ${domain} > /dev/null 2>&1
-              echo "${CSUCCESS}Domain: ${domain} has been deleted.${CEND}"
-            else
-              echo "${CWARNING}Virtualhost: ${domain} was not exist! ${CEND}"
-            fi
-            break
-          fi
-        done
-
-      else
-        echo "${CWARNING}Virtualhost was not exist! ${CEND}"
-      fi
-    fi
-  fi
-}
-
-Del_Tomcat_Vhost() {
-  if [ -e "${tomcat_install_dir}/conf/server.xml" ]; then
-    if [ -e "${web_install_dir}/sbin/nginx" ]; then
-      if [ -n "$(echo ${domain} | grep '.*\..*')" ] && [ -n "$(grep vhost-${domain} ${tomcat_install_dir}/conf/server.xml)" ]; then
-        sed -i /vhost-${domain}/d ${tomcat_install_dir}/conf/server.xml
-        rm -f ${tomcat_install_dir}/conf/vhost/${domain}.xml
-        service tomcat restart
-      fi
-    else
-      Domain_List=$(ls ${tomcat_install_dir}/conf/vhost | grep -v 'localhost.xml' | sed "s@.xml@@g")
-      if [ -n "${Domain_List}" ]; then
-        echo
-        echo "Virtualhost list:"
-        echo ${CMSG}${Domain_List}${CEND}
-        while :; do echo
-          read -e -p "Please input a domain you want to delete: " domain
-          if [ -z "$(echo ${domain} | grep '.*\..*')" ]; then
-            echo "${CWARNING}Your ${domain} is invalid! ${CEND}"
-          else
-            if [ -n "$(grep vhost-${domain} ${tomcat_install_dir}/conf/server.xml)" ]; then
-              sed -i /vhost-${domain}/d ${tomcat_install_dir}/conf/server.xml
-              rm -f ${tomcat_install_dir}/conf/vhost/${domain}.xml
-              service tomcat restart
-              while :; do echo
-                read -e -p "Do you want to delete Virtul Host directory? [y/n]: " Del_Vhost_wwwroot_flag
-                if [[ ! ${Del_Vhost_wwwroot_flag} =~ ^[y,n]$ ]]; then
-                  echo "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
-                else
-                  break
-                fi
-              done
-
-              if [ "${Del_Vhost_wwwroot_flag}" == 'y' ]; then
-		if [ "${quiet_flag}" != 'y' ]; then
-                  echo "Press Ctrl+c to cancel or Press any key to continue..."
-                  char=$(get_char)
-		fi
-                rm -rf ${Directory}
-              fi
-              echo "${CSUCCESS}Domain: ${domain} has been deleted.${CEND}"
-            else
-              echo "${CWARNING}Virtualhost: ${domain} was not exist! ${CEND}"
-            fi
-            break
-          fi
-        done
-
-      else
-        echo "${CWARNING}Virtualhost was not exist! ${CEND}"
-      fi
-    fi
-  fi
-}
 
 List_Vhost() {
   [ -e "${tomcat_install_dir}/conf/server.xml" -a ! -d "${web_install_dir}/sbin/nginx" ] && Domain_List=$(ls ${tomcat_install_dir}/conf/vhost | grep -v 'localhost.xml' | sed "s@.xml@@g")
