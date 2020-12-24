@@ -14,7 +14,7 @@ checkDownload() {
   # General system utils
   if [[ ${tomcat_option} =~ ^[1-4]$ ]] || [[ ${apache_option} =~ ^[1-2]$ ]] || [[ ${php_option} =~ ^[1-9]$ ]]; then
     echo "Download openSSL..."
-    src_url=https://github.com/openssl/openssl/archive/OpenSSL_${openssl_ver}.tar.gz && Download_src
+    src_url=https://www.openssl.org/source/old/openssl-${openssl_ver}.tar.gz && Download_src
     echo "Download cacert.pem..."
     src_url=https://curl.haxx.se/ca/cacert.pem && Download_src
   fi
@@ -28,7 +28,7 @@ checkDownload() {
   # openssl1.1
   if [[ ${nginx_option} =~ ^[1-3]$ ]]; then
       echo "Download openSSL1.1..."
-      src_url=https://github.com/openssl/openssl/archive/OpenSSL_${openssl11_ver}.tar.gz && Download_src
+      src_url=https://www.openssl.org/source/openssl-${openssl11_ver}.tar.gz && Download_src
   fi
 
   # nginx
