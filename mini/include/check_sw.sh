@@ -39,7 +39,7 @@ installDepsBySrc() {
   if [ "${OS}" == 'CentOS' ]; then
     # install htop
     if ! command -v htop >/dev/null 2>&1; then
-      tar xzf ${htop_ver}.tar.gz
+      tar xzf htop-${htop_ver}.tar.gz
       pushd htop-${htop_ver} > /dev/null
       ./configure
       make -j ${THREAD} && make install
