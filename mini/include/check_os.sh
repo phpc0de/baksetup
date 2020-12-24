@@ -4,7 +4,7 @@
 
 if [ -e "/usr/bin/yum" ]; then
   PM=yum
-  command -v lsb_release >/dev/null 2>&1 || yum -y install redhat-lsb-core; clear; }
+  command -v lsb_release >/dev/null 2>&1 || { yum -y install redhat-lsb-core; clear; }
 fi
 
 command -v lsb_release >/dev/null 2>&1 || { echo "${CFAILURE}${PM} source failed! ${CEND}"; kill -9 $$; }
