@@ -172,6 +172,18 @@ while :; do
 done
 
 
+if [ ${ARG_NUM} == 0 ]; then
+  if [ ! -e ~/.oneinstack ]; then
+    # check iptables
+    while :; do echo
+      read -e -p "Do you want to enable iptables? [y/n]: " iptables_flag
+      if [[ ! ${iptables_flag} =~ ^[y,n]$ ]]; then
+        echo "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
+      else
+        break
+      fi
+    done
+  fi
 
   # check Web server
   while :; do echo
@@ -198,7 +210,10 @@ done
             break
           fi
         done
-
+      fi
+      break
+    fi
+  done
 
         
 
