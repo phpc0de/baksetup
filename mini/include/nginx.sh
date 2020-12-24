@@ -11,7 +11,9 @@ Install_Nginx() {
 
   tar xzf pcre-${pcre_ver}.tar.gz
   tar xzf nginx-${nginx_ver}.tar.gz
+  mv OpenSSL_${openssl11_ver}.tar.gz openssl-${openssl11_ver}.tar.gz
   tar xzf openssl-${openssl11_ver}.tar.gz
+  mv openssl-OpenSSL_${openssl11_ver} openssl-${openssl11_ver}
   pushd nginx-${nginx_ver} > /dev/null
   # Modify Nginx version
   #sed -i 's@#define NGINX_VERSION.*$@#define NGINX_VERSION      "2.3.7"@' src/core/nginx.h
