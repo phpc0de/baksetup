@@ -61,11 +61,9 @@ checkDownload() {
     case "${db_option}" in
       2)
         # MySQL 5.7
-        if [ "${IPADDR_COUNTRY}"x == "CN"x ]; then
-        else
-          DOWN_ADDR_MYSQL=https://cdn.mysql.com/Downloads/MySQL-5.7
-          DOWN_ADDR_MYSQL_BK=http://mysql.he.net/Downloads/MySQL-5.7
-        fi
+        DOWN_ADDR_MYSQL=https://cdn.mysql.com/Downloads/MySQL-5.7
+        DOWN_ADDR_MYSQL_BK=http://mysql.he.net/Downloads/MySQL-5.7
+
 
         if [ "${dbinstallmethod}" == '1' ]; then
           echo "Download MySQL 5.7 binary package..."
@@ -95,11 +93,9 @@ checkDownload() {
         ;;
       3)
         # MySQL 5.6
-        if [ "${IPADDR_COUNTRY}"x == "CN"x ]; then
-        else
-          DOWN_ADDR_MYSQL=http://cdn.mysql.com/Downloads/MySQL-5.6
-          DOWN_ADDR_MYSQL_BK=http://mysql.he.net/Downloads/MySQL-5.6
-        fi
+        DOWN_ADDR_MYSQL=http://cdn.mysql.com/Downloads/MySQL-5.6
+        DOWN_ADDR_MYSQL_BK=http://mysql.he.net/Downloads/MySQL-5.6
+
 
         if [ "${dbinstallmethod}" == '1' ]; then
           echo "Download MySQL 5.6 binary package..."
@@ -132,10 +128,8 @@ checkDownload() {
         # MongoDB
         echo "Download MongoDB binary package..."
         FILE_NAME=mongodb-linux-${SYS_BIT_b}-${mongodb_ver}.tgz
-        if [ "${IPADDR_COUNTRY}"x == "CN"x ]; then
-        else
-          DOWN_ADDR_MongoDB=https://fastdl.mongodb.org/linux
-        fi
+        DOWN_ADDR_MongoDB=https://fastdl.mongodb.org/linux
+
         src_url=${DOWN_ADDR_MongoDB}/${FILE_NAME} && Download_src
         src_url=${DOWN_ADDR_MongoDB}/${FILE_NAME}.md5 && Download_src
         MongoDB_TAR_MD5=$(awk '{print $1}' ${FILE_NAME}.md5)
