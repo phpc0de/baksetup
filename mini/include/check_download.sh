@@ -333,15 +333,7 @@ checkDownload() {
     fi
   fi
 
-  # others
-  if [ "${downloadDepsSrc}" == '1' ]; then
-    if [ "${PM}" == 'yum' ]; then
-      echo "Download htop for CentOS..."
-      src_url=https://github.com/htop-dev/htop/archive/${htop_ver}.tar.gz && Download_src
-    fi
 
-
-  fi
 
   popd > /dev/null
 }
